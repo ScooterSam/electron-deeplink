@@ -54,6 +54,7 @@ interface DeeplinkConfig {
     isYarn?: boolean;
     debugLogging?: boolean;
     electronPath: string;
+    useInstanceLocking?: boolean;
 }
 
 interface InstanceConfig {
@@ -75,7 +76,7 @@ class Deeplink extends EventEmitter {
 
     constructor(config: DeeplinkConfig) {
         super();
-        const { app, mainWindow, protocol, isDev = false, debugLogging = false, electronPath = '/node_modules/electron/dist/Electron.app' } = config;
+        const { app, mainWindow, protocol, isDev = false, debugLogging = false, electronPath = '/node_modules/electron/dist/Electron.app', useInstanceLocking = true } = config;
 
         this.checkConfig(config);
 
@@ -89,14 +90,16 @@ class Deeplink extends EventEmitter {
             this.logger.debug(`electron-deeplink: debugLogging is enabled`);
         }
 
-        const instanceLock = process.mas === true ? true : app.requestSingleInstanceLock();
+        if(useInstanceLocking) {
+            const instanceLock = process.mas === true ? true : app.requestSingleInstanceLock();
 
-        if (!instanceLock) {
-            if (debugLogging) {
-                this.logger.debug(`electron-deeplink: unable to lock instance`);
+            if (!instanceLock) {
+                if (debugLogging) {
+                    this.logger.debug(`electron-deeplink: unable to lock instance`);
+                }
+                app.quit();
+                return;
             }
-            app.quit();
-            return;
         }
 
         if (isDev && os.platform() === 'darwin') {

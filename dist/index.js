@@ -94,7 +94,7 @@ var Deeplink = /** @class */ (function (_super) {
         _this.getLogfile = function () {
             return _this.logger ? _this.logger.transports.file.getFile().path : 'debugLogging is disabled';
         };
-        var app = config.app, mainWindow = config.mainWindow, protocol = config.protocol, _a = config.isDev, isDev = _a === void 0 ? false : _a, _b = config.debugLogging, debugLogging = _b === void 0 ? false : _b, _c = config.electronPath, electronPath = _c === void 0 ? '/node_modules/electron/dist/Electron.app' : _c;
+        var app = config.app, mainWindow = config.mainWindow, protocol = config.protocol, _a = config.isDev, isDev = _a === void 0 ? false : _a, _b = config.debugLogging, debugLogging = _b === void 0 ? false : _b, _c = config.electronPath, electronPath = _c === void 0 ? '/node_modules/electron/dist/Electron.app' : _c, _d = config.useInstanceLocking, useInstanceLocking = _d === void 0 ? true : _d;
         _this.checkConfig(config);
         _this.config = { protocol: protocol, debugLogging: debugLogging, isDev: isDev, electronPath: electronPath };
         _this.app = app;
@@ -104,13 +104,15 @@ var Deeplink = /** @class */ (function (_super) {
             _this.logger.transports.file.level = 'debug';
             _this.logger.debug("electron-deeplink: debugLogging is enabled");
         }
-        var instanceLock = process.mas === true ? true : app.requestSingleInstanceLock();
-        if (!instanceLock) {
-            if (debugLogging) {
-                _this.logger.debug("electron-deeplink: unable to lock instance");
+        if (useInstanceLocking) {
+            var instanceLock = process.mas === true ? true : app.requestSingleInstanceLock();
+            if (!instanceLock) {
+                if (debugLogging) {
+                    _this.logger.debug("electron-deeplink: unable to lock instance");
+                }
+                app.quit();
+                return _this;
             }
-            app.quit();
-            return _this;
         }
         if (isDev && os.platform() === 'darwin') {
             var handlerDebug_1 = _this.setAppProtocol();
